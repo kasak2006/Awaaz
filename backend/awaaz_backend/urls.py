@@ -15,16 +15,19 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.conf.urls.static import static
 from django.urls import path,include
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
+from django.conf import settings
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('apps.core.urls')),
-    path('api/accounts/', include('accounts.urls')),
-     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/', include('accounts.urls')),  # Include accounts app URLs under /api/
+    path('', include('posts.urls')),
+    # path('api/posts/', include('posts.urls')), 
+    # path('api/accounts/', include('accounts.urls')),
+    # path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

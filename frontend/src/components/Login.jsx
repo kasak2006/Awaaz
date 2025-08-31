@@ -1,104 +1,304 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { FaEye, FaEyeSlash, FaUser, FaLock, FaSignInAlt } from 'react-icons/fa';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
-    emailOrUsername: "",
+    username: "",
     password: ""
   });
+  const [mounted, setMounted] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState("");
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const navigate = useNavigate();
+  
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle login logic
-    console.log(formData);
+    setMessage("");
+    
+    try {
+      const response = await axios.post(
+        'http://localhost:8000/api/login/',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      // Save token in localStorage here:
+      if (response.data.token) {
+        localStorage.setItem('authToken', response.data.token);
+
+        // Fix: Show only readable messages
+        const msg = response.data.message;
+        if (typeof msg === "string") {
+          setMessage(msg);
+        } else if (typeof msg === "object") {
+          setMessage(Object.values(msg).flat().join(" "));
+        } else {
+          setMessage("Login successful!");
+        }
+        
+        setTimeout(() => navigate('/dashboard'), 1000);
+      } else {
+        setMessage("Login failed: No token received.");
+      }
+
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.message) {
+        const msg = error.response.data.message;
+        if (typeof msg === "string") {
+          setMessage(msg);
+        } else if (typeof msg === "object") {
+          setMessage(Object.values(msg).flat().join(" "));
+        } else {
+          setMessage("Login error response format unexpected.");
+        }
+      } else {
+        setMessage('Login failed.');
+      }
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#181516] px-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#0d0b0c] via-[#181516] to-[#23171b] flex items-center justify-center relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-20 left-10 w-64 h-64 bg-gradient-to-br from-[#9E6263]/10 to-transparent rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-20 right-10 w-80 h-80 bg-gradient-to-tl from-[#C6A3B5]/8 to-transparent rounded-full blur-3xl animate-float-delayed"></div>
+        <div className="absolute top-1/2 left-1/4 w-40 h-40 bg-gradient-to-r from-[#643E43]/12 to-transparent rounded-full blur-2xl animate-pulse"></div>
+        <div className="absolute bottom-1/3 right-1/3 w-32 h-32 bg-gradient-to-l from-[#9E6263]/15 to-transparent rounded-full blur-xl animate-pulse delay-1000"></div>
+      </div>
+
+      {/* Floating particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(15)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-[#C6A3B5] rounded-full opacity-20 animate-twinkle"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 5}s`,
+              animationDuration: `${3 + Math.random() * 4}s`
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Main card with enhanced effects */}
       <div
-        className="w-full max-w-md rounded-2xl shadow-xl p-10"
+        className={`relative z-10 max-w-md w-full mx-4 rounded-3xl shadow-2xl p-8 backdrop-blur-xl transition-all duration-1000 transform ${
+          mounted ? 'scale-100 opacity-100 translate-y-0' : 'scale-90 opacity-0 translate-y-8'
+        }`}
         style={{
-          backgroundColor: "#23171b", // solid dark background, no gradient
-          border: "1.5px solid #9E6263",
-          boxShadow: "0 4px 24px 0 #23171b80, 0 1.5px 12px #C6A3B533"
+          background: "linear-gradient(135deg, rgba(35, 23, 27, 0.9) 0%, rgba(42, 29, 34, 0.8) 100%)",
+          border: "1px solid rgba(158, 98, 99, 0.3)",
+          boxShadow: "0 25px 50px -12px rgba(35, 23, 27, 0.8), 0 0 0 1px rgba(198, 163, 181, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
         }}
       >
-        <h2
-          className="text-3xl font-bold text-center mb-6"
-          style={{ color: "#C6A3B5" }}
-        >
-          Welcome Back
-        </h2>
+        {/* Header with animation */}
+        <div className="text-center mb-8">
+          <div className="inline-block p-4 rounded-full bg-gradient-to-br from-[#9E6263]/20 to-[#C6A3B5]/20 mb-4 transform transition-all duration-500 hover:scale-110">
+            <FaSignInAlt className="text-3xl text-[#C6A3B5]" />
+          </div>
+          <h2 className="text-3xl font-bold text-[#C6A3B5] mb-2 tracking-tight">
+            Welcome Back
+          </h2>
+          <p className="text-[#C6A3B5]/70 text-sm">
+            log in to continue your journey with Awaaz
+          </p>
+        </div>
 
+        {/* Form with enhanced styling */}
         <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
-          {/* Email or Username */}
-          <div>
-            <label
-              htmlFor="emailOrUsername"
-              className="block mb-1 font-semibold"
-              style={{ color: "#C6A3B5", opacity: 0.8 }}
-            >
-              Email or Username
-            </label>
-            <input
-              id="emailOrUsername"
-              type="text"
-              name="emailOrUsername"
-              placeholder="Enter your email or username"
-              value={formData.emailOrUsername}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 rounded-lg border border-[#3D292B] bg-[#23171b] text-[#C6A3B5] placeholder-[#C6A3B597] focus:outline-none focus:ring-2 focus:ring-[#9E6263] focus:border-[#9E6263] transition shadow-sm"
-            />
+          {/* Username/Email Input */}
+          <EnhancedInput
+            label="Username "
+            name="username"
+            type="text"
+            value={formData.username}
+            onChange={handleChange}
+            icon={FaUser}
+            focused={focusedField === "username"}
+            onFocus={() => setFocusedField("username")}
+            onBlur={() => setFocusedField("")}
+            placeholder="Enter your username "
+          />
+
+          {/* Password Input */}
+          <PasswordInput
+            label="Password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
+            focused={focusedField === "password"}
+            onFocus={() => setFocusedField("password")}
+            onBlur={() => setFocusedField("")}
+          />
+
+      
+          {/* Enhanced Login Button */}
+          <button
+            type="submit"
+            className="group relative w-full py-4 rounded-2xl font-bold text-lg text-white overflow-hidden transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#9E6263]/25"
+            style={{
+              background: "linear-gradient(135deg, #9E6263 0%, #C6A3B5 50%, #643E43 100%)",
+            }}
+          >
+            <span className="relative z-10">Log In</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-[#C6A3B5] to-[#f4e4ec] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+          </button>
+
+          {/* Divider with animation */}
+          <div className="relative flex items-center my-8">
+            <div className="flex-grow border-t border-[#C6A3B5]/30"></div>
+          
+         
           </div>
 
-          {/* Password */}
-          <div>
-            <label
-              htmlFor="password"
-              className="block mb-1 font-semibold"
-              style={{ color: "#C6A3B5", opacity: 0.8 }}
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 rounded-lg border border-[#3D292B] bg-[#23171b] text-[#C6A3B5] placeholder-[#C6A3B597] focus:outline-none focus:ring-2 focus:ring-[#9E6263] focus:border-[#9E6263] transition shadow-sm"
-            />
-          </div>
-
-          {/* Forgot Password Link */}
-          <div className="text-right">
-            <a
-              href="#"
-              className="text-sm font-semibold"
-              style={{ color: "#9E6263" }}
-            >
-              Forgot Password?
-            </a>
-          </div>
-
-          {/* Login Button */}
-         {/* Login Button with gradient */}
-<button
-  type="submit"
-  className="w-full py-3 rounded-xl font-bold text-white text-lg shadow-md transition
-    bg-gradient-to-r from-[#9E6263] via-[#C6A3B5] to-[#643E43] 
-    hover:from-[#643E43] hover:to-[#C6A3B5]"
->
-  Login
-</button>
-
+          
         </form>
+
+        {/* Enhanced message display */}
+        {message && (
+          <div className={`mt-6 p-4 rounded-xl text-center font-medium transition-all duration-300 ${
+            message.includes('successful') || message.includes('Login successful')
+              ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
+              : 'bg-red-500/10 text-red-400 border border-red-500/20'
+          }`}>
+            {message}
+          </div>
+        )}
+
+        {/* Signup link */}
+        <div className="text-center mt-6">
+          <p className="text-[#C6A3B5]/60 text-sm">
+            Don't have an account?{' '}
+            <a href="/signup" className="text-[#C6A3B5] font-semibold hover:text-white transition-colors duration-300">
+              Create one here
+            </a>
+          </p>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        @keyframes float-delayed {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-15px) rotate(-180deg); }
+        }
+        
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.2; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.2); }
+        }
+        
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+        
+        .animate-float-delayed {
+          animation: float-delayed 8s ease-in-out infinite;
+        }
+        
+        .animate-twinkle {
+          animation: twinkle ease-in-out infinite;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// Enhanced Input Component
+function EnhancedInput({ label, name, type, value, onChange, icon: Icon, focused, onFocus, onBlur, placeholder }) {
+  return (
+    <div className="relative">
+      <label className="block text-sm font-medium text-[#C6A3B5]/80 mb-2">
+        {label}
+      </label>
+      <div className="relative">
+        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+          <Icon className={`text-lg transition-colors duration-300 ${
+            focused ? 'text-[#C6A3B5]' : 'text-[#C6A3B5]/50'
+          }`} />
+        </div>
+        <input
+          name={name}
+          type={type}
+          value={value}
+          onChange={onChange}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          required
+          className={`w-full pl-12 pr-4 py-4 rounded-xl border-2 bg-[#23171b]/80 text-[#C6A3B5] placeholder-[#C6A3B5]/40 font-medium transition-all duration-300 focus:outline-none ${
+            focused 
+              ? 'border-[#9E6263] shadow-lg shadow-[#9E6263]/20' 
+              : 'border-[#643E43]/30 hover:border-[#643E43]/50'
+          }`}
+          placeholder={placeholder}
+        />
+      </div>
+    </div>
+  );
+}
+
+// Enhanced Password Input Component
+function PasswordInput({ label, name, value, onChange, showPassword, setShowPassword, focused, onFocus, onBlur }) {
+  return (
+    <div className="relative">
+      <label className="block text-sm font-medium text-[#C6A3B5]/80 mb-2">
+        {label}
+      </label>
+      <div className="relative">
+        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+          <FaLock className={`text-lg transition-colors duration-300 ${
+            focused ? 'text-[#C6A3B5]' : 'text-[#C6A3B5]/50'
+          }`} />
+        </div>
+        <input
+          name={name}
+          type={showPassword ? "text" : "password"}
+          value={value}
+          onChange={onChange}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          required
+          className={`w-full pl-12 pr-12 py-4 rounded-xl border-2 bg-[#23171b]/80 text-[#C6A3B5] placeholder-[#C6A3B5]/40 font-medium transition-all duration-300 focus:outline-none ${
+            focused 
+              ? 'border-[#9E6263] shadow-lg shadow-[#9E6263]/20' 
+              : 'border-[#643E43]/30 hover:border-[#643E43]/50'
+          }`}
+          placeholder="Enter your password"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#C6A3B5]/50 hover:text-[#C6A3B5] transition-colors duration-300"
+        >
+          {showPassword ? <FaEyeSlash className="text-lg" /> : <FaEye className="text-lg" />}
+        </button>
       </div>
     </div>
   );
